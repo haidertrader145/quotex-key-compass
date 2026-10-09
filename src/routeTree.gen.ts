@@ -10,33 +10,79 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicTelegramPendingRequestsRouteImport } from './routes/api/public/telegram/pending-requests'
+import { Route as ApiPublicTelegramVerifyResultRouteImport } from './routes/api/public/telegram/verify-result'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramPendingRequestsRoute =
+  ApiPublicTelegramPendingRequestsRouteImport.update({
+    id: '/api/public/telegram/pending-requests',
+    path: '/api/public/telegram/pending-requests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTelegramVerifyResultRoute =
+  ApiPublicTelegramVerifyResultRouteImport.update({
+    id: '/api/public/telegram/verify-result',
+    path: '/api/public/telegram/verify-result',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
+  '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
+  '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
+  '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/public/telegram/pending-requests'
+    | '/api/public/telegram/verify-result'
+    | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/public/telegram/pending-requests'
+    | '/api/public/telegram/verify-result'
+    | '/api/public/telegram/webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/telegram/pending-requests'
+    | '/api/public/telegram/verify-result'
+    | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicTelegramPendingRequestsRoute: typeof ApiPublicTelegramPendingRequestsRoute
+  ApiPublicTelegramVerifyResultRoute: typeof ApiPublicTelegramVerifyResultRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +94,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram/pending-requests': {
+      id: '/api/public/telegram/pending-requests'
+      path: '/api/public/telegram/pending-requests'
+      fullPath: '/api/public/telegram/pending-requests'
+      preLoaderRoute: typeof ApiPublicTelegramPendingRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telegram/verify-result': {
+      id: '/api/public/telegram/verify-result'
+      path: '/api/public/telegram/verify-result'
+      fullPath: '/api/public/telegram/verify-result'
+      preLoaderRoute: typeof ApiPublicTelegramVerifyResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicTelegramPendingRequestsRoute: ApiPublicTelegramPendingRequestsRoute,
+  ApiPublicTelegramVerifyResultRoute: ApiPublicTelegramVerifyResultRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
