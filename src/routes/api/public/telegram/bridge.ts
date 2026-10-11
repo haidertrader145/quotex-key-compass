@@ -38,9 +38,9 @@ export const Route = createFileRoute("/api/public/telegram/bridge")({
           last_seen: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        if (typeof body.status === "string") update.status = body.status.slice(0, 50);
-        if (body.session_string !== undefined) update.session_string = body.session_string;
-        if (body.clear_code) update.login_code = null;
+        if (typeof body.status === "string") update["status"] = body.status.slice(0, 50);
+        if (body.session_string !== undefined) update["session_string"] = body.session_string;
+        if (body.clear_code) update["login_code"] = null;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         await supabaseAdmin.from("bridge_state").update(update as never).eq("id", 1);
         return Response.json({ ok: true });
