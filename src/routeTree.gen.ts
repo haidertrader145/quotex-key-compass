@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiPublicTelegramBridgeRouteImport } from './routes/api/public/telegram/bridge'
 import { Route as ApiPublicTelegramPendingRequestsRouteImport } from './routes/api/public/telegram/pending-requests'
 import { Route as ApiPublicTelegramVerifyResultRouteImport } from './routes/api/public/telegram/verify-result'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -35,6 +36,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicTelegramBridgeRoute = ApiPublicTelegramBridgeRouteImport.update({
+  id: '/api/public/telegram/bridge',
+  path: '/api/public/telegram/bridge',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTelegramPendingRequestsRoute =
   ApiPublicTelegramPendingRequestsRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
     | '/api/public/telegram/webhook'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
     | '/api/public/telegram/webhook'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
     | '/api/public/telegram/webhook'
@@ -113,6 +125,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicTelegramBridgeRoute: typeof ApiPublicTelegramBridgeRoute
   ApiPublicTelegramPendingRequestsRoute: typeof ApiPublicTelegramPendingRequestsRoute
   ApiPublicTelegramVerifyResultRoute: typeof ApiPublicTelegramVerifyResultRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -147,6 +160,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/telegram/bridge': {
+      id: '/api/public/telegram/bridge'
+      path: '/api/public/telegram/bridge'
+      fullPath: '/api/public/telegram/bridge'
+      preLoaderRoute: typeof ApiPublicTelegramBridgeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/telegram/pending-requests': {
       id: '/api/public/telegram/pending-requests'
@@ -187,6 +207,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicTelegramBridgeRoute: ApiPublicTelegramBridgeRoute,
   ApiPublicTelegramPendingRequestsRoute: ApiPublicTelegramPendingRequestsRoute,
   ApiPublicTelegramVerifyResultRoute: ApiPublicTelegramVerifyResultRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
