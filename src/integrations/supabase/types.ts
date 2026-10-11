@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      bridge_state: {
+        Row: {
+          id: number
+          last_seen: string | null
+          login_code: string | null
+          session_string: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_seen?: string | null
+          login_code?: string | null
+          session_string?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_seen?: string | null
+          login_code?: string | null
+          session_string?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       license_keys: {
         Row: {
           created_at: string
