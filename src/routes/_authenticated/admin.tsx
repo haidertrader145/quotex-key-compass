@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { BridgePanel } from "@/components/BridgePanel";
 import { addLicenseKeys, getAdminOverview, resolveRequest } from "@/lib/admin.functions";
 
 type Overview = Awaited<ReturnType<typeof getAdminOverview>>;
@@ -132,6 +133,8 @@ function AdminPage() {
             </div>
           ))}
         </div>
+
+        <BridgePanel />
 
         <div className="mt-6 flex gap-2">
           {(["requests", "keys", "users"] as const).map((t) => (

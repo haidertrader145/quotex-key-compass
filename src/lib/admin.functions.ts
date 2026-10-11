@@ -48,6 +48,41 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     };
   });
 
+export const getBridgeStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("bridge_state" as never)
+      .select("status, last_seen")
+      .eq("id", 1)
+      .maybeSingle();
+    return (data as { status: string; last_seen: string | null } | null) ?? { status: "offline", last_seen: null };
+  });
+
+export const submitLoginCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { code: string }) => z.object({ code: z.string().regex(/^\d{4,8}$/) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("bridge_state" as never).update({ login_code: data.code } as never).eq("id", 1);
+    return { ok: true };
+  });
+
+export const resetBridgeLogin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("bridge_state" as never)
+      .update({ session_string: null, login_code: null, status: "restart_needed" } as never)
+      .eq("id", 1);
+    return { ok: true };
+  });
+
 export const addLicenseKeys = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { keys: string }) => z.object({ keys: z.string().min(1).max(20000) }).parse(input))
