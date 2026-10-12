@@ -2,7 +2,48 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 
-import { requireUnlocked } from "@/lib/admin-gate.server";
+import { useSession } from "@tanstack/react-start/server";
+
+type GateSession = { unlocked?: boolean };
+
+function sessionConfig() {
+  return {
+    password: process.env["SESSION_SECRET"]!,
+    name: "admin-gate",
+    maxAge: 60 * 60 * 24 * 7,
+    cookie: { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" },
+  };
+}
+
+async function sha(text: string) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function requireUnlocked() {
+  const session = await useSession<GateSession>(sessionConfig());
+  if (!session.data.unlocked) throw new Error("Locked");
+}
+
+export const unlockAdmin = createServerFn({ method: "POST" })
+  .inputValidator((input: { password: string }) => z.object({ password: z.string().max(200) }).parse(input))
+  .handler(async ({ data }) => {
+    const expected = process.env["ADMIN_PASSWORD"];
+    if (!expected) throw new Error("ADMIN_PASSWORD is not set");
+    const [a, b] = await Promise.all([sha(data.password), sha(expected)]);
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    if (diff !== 0) return { ok: false as const };
+    const session = await useSession<GateSession>(sessionConfig());
+    await session.update({ unlocked: true });
+    return { ok: true as const };
+  });
+
+export const lockAdmin = createServerFn({ method: "POST" }).handler(async () => {
+  const session = await useSession<GateSession>(sessionConfig());
+  await session.clear();
+  return { ok: true as const };
+});
 
 export const getAdminOverview = createServerFn({ method: "GET" })
   .handler(async () => {
