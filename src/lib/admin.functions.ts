@@ -20,10 +20,8 @@ async function sha(text: string) {
   return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function requireUnlocked() {
-  const session = await useSession<GateSession>(sessionConfig());
-  if (!session.data.unlocked) throw new Error("Locked");
-}
+// Admin is intentionally open (owner asked for no password).
+async function requireUnlocked() {}
 
 export const unlockAdmin = createServerFn({ method: "POST" })
   .inputValidator((input: { password: string }) => z.object({ password: z.string().max(200) }).parse(input))
