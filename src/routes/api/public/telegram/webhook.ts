@@ -23,13 +23,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
     handlers: {
       POST: async ({ request }) => {
         const telegramKey = process.env["TELEGRAM_API_KEY"];
-        if (!telegramKey) {
+        const verifier = process.env["VERIFIER_SECRET"];
+        if (!telegramKey && !verifier) {
           return new Response("Not configured", { status: 500 });
         }
 
-        const expected = await deriveTelegramWebhookSecret(telegramKey);
         const actual = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
-        if (!safeEqual(actual, expected)) {
+        const candidates: string[] = [];
+        if (verifier) candidates.push(await deriveTelegramWebhookSecret(`verifier:${verifier}`));
+        if (telegramKey) candidates.push(await deriveTelegramWebhookSecret(telegramKey));
+        if (!candidates.some((c) => safeEqual(actual, c))) {
+          console.error("Telegram webhook: secret token mismatch");
           return new Response("Unauthorized", { status: 401 });
         }
 
