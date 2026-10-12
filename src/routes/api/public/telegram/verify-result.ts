@@ -51,7 +51,7 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
         if (verified && affiliate_reply) {
           const num = (label: string) => {
             const m = affiliate_reply.match(new RegExp(`${label}:\\s*\\$?\\s*(-?[\\d,]+(?:\\.\\d+)?)`, "i"));
-            return m ? Number(m[1].replace(/,/g, "")) : null;
+            return m ? Number((m[1] ?? "").replace(/,/g, "")) : null;
           };
           const deposit = num("Deposits Sum");
           const balance = num("Balance");
