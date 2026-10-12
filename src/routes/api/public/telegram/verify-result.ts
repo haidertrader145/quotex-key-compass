@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { safeEqual, sendMessage } from "@/lib/telegram.server";
 
+const MIN_DEPOSIT = 50;
+
 const bodySchema = z.object({
   request_id: z.string().uuid(),
   verified: z.boolean(),
@@ -44,6 +46,27 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
         }
 
         const now = new Date().toISOString();
+
+        // Minimum deposit rule: verified accounts must have deposited at least $50.
+        if (verified && affiliate_reply) {
+          const num = (label: string) => {
+            const m = affiliate_reply.match(new RegExp(`${label}:\\s*\\$?\\s*(-?[\\d,]+(?:\\.\\d+)?)`, "i"));
+            return m ? Number((m[1] ?? "").replace(/,/g, "")) : null;
+          };
+          const deposit = num("Deposits Sum");
+          const balance = num("Balance");
+          if (deposit !== null && deposit < MIN_DEPOSIT) {
+            await supabaseAdmin
+              .from("verification_requests")
+              .update({ status: "rejected", affiliate_reply: `[LOW DEPOSIT] ${affiliate_reply}`, resolved_at: now })
+              .eq("id", request_id);
+            await sendMessage(
+              reqRow.chat_id,
+              `✅ Your account (trader ID <b>${reqRow.trader_id}</b>) was created through our affiliate link.\n\n💰 Deposit: <b>$${deposit.toFixed(2)}</b>\n💼 Balance: <b>$${(balance ?? 0).toFixed(2)}</b>\n\n⚠️ To get access, please deposit at least <b>$${MIN_DEPOSIT} USD</b>, then send your trader ID again.`,
+            );
+            return Response.json({ ok: true, verified: true, low_deposit: true });
+          }
+        }
 
         if (!verified) {
           await supabaseAdmin
