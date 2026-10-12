@@ -8,7 +8,7 @@ import { addLicenseKeys, getAdminOverview, resolveRequest } from "@/lib/admin.fu
 
 type Overview = Awaited<ReturnType<typeof getAdminOverview>>;
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
