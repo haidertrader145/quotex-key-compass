@@ -1,20 +1,53 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function requireAdmin(context: { supabase: any; userId: string }) {
-  const { data: isAdmin } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Forbidden");
+import { useSession } from "@tanstack/react-start/server";
+
+type GateSession = { unlocked?: boolean };
+
+function sessionConfig() {
+  return {
+    password: process.env["SESSION_SECRET"]!,
+    name: "admin-gate",
+    maxAge: 60 * 60 * 24 * 7,
+    cookie: { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" },
+  };
 }
 
+async function sha(text: string) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function requireUnlocked() {
+  const session = await useSession<GateSession>(sessionConfig());
+  if (!session.data.unlocked) throw new Error("Locked");
+}
+
+export const unlockAdmin = createServerFn({ method: "POST" })
+  .inputValidator((input: { password: string }) => z.object({ password: z.string().max(200) }).parse(input))
+  .handler(async ({ data }) => {
+    const expected = process.env["ADMIN_PASSWORD"];
+    if (!expected) throw new Error("ADMIN_PASSWORD is not set");
+    const [a, b] = await Promise.all([sha(data.password), sha(expected)]);
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    if (diff !== 0) return { ok: false as const };
+    const session = await useSession<GateSession>(sessionConfig());
+    await session.update({ unlocked: true });
+    return { ok: true as const };
+  });
+
+export const lockAdmin = createServerFn({ method: "POST" }).handler(async () => {
+  const session = await useSession<GateSession>(sessionConfig());
+  await session.clear();
+  return { ok: true as const };
+});
+
 export const getAdminOverview = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await requireAdmin(context);
+  .handler(async () => {
+    await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [keys, users, requests] = await Promise.all([
@@ -49,9 +82,8 @@ export const getAdminOverview = createServerFn({ method: "GET" })
   });
 
 export const getBridgeStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await requireAdmin(context);
+  .handler(async () => {
+    await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("bridge_state" as never)
@@ -62,19 +94,17 @@ export const getBridgeStatus = createServerFn({ method: "GET" })
   });
 
 export const submitLoginCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: { code: string }) => z.object({ code: z.string().regex(/^\d{4,8}$/) }).parse(input))
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+  .handler(async ({ data }) => {
+    await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("bridge_state" as never).update({ login_code: data.code } as never).eq("id", 1);
     return { ok: true };
   });
 
 export const resetBridgeLogin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await requireAdmin(context);
+  .handler(async () => {
+    await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("bridge_state" as never)
@@ -84,10 +114,9 @@ export const resetBridgeLogin = createServerFn({ method: "POST" })
   });
 
 export const addLicenseKeys = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: { keys: string }) => z.object({ keys: z.string().min(1).max(20000) }).parse(input))
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+  .handler(async ({ data }) => {
+    await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const keys = [...new Set(data.keys.split(/\r?\n/).map((k) => k.trim()).filter(Boolean))];
@@ -102,12 +131,11 @@ export const addLicenseKeys = createServerFn({ method: "POST" })
   });
 
 export const resolveRequest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: { requestId: string; verified: boolean }) =>
     z.object({ requestId: z.string().uuid(), verified: z.boolean() }).parse(input),
   )
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+  .handler(async ({ data }) => {
+    await requireUnlocked();
 
     // Reuse the same issuance logic as the bridge callback by calling the
     // public route internally is not possible, so duplicate the minimal flow.

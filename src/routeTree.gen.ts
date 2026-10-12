@@ -10,9 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicTelegramBridgeRouteImport } from './routes/api/public/telegram/bridge'
 import { Route as ApiPublicTelegramPendingRequestsRouteImport } from './routes/api/public/telegram/pending-requests'
 import { Route as ApiPublicTelegramVerifyResultRouteImport } from './routes/api/public/telegram/verify-result'
@@ -23,19 +22,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicTelegramBridgeRoute = ApiPublicTelegramBridgeRouteImport.update({
   id: '/api/public/telegram/bridge',
@@ -63,8 +58,8 @@ const ApiPublicTelegramWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
@@ -72,8 +67,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
@@ -82,9 +77,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/api/public/telegram/bridge': typeof ApiPublicTelegramBridgeRoute
   '/api/public/telegram/pending-requests': typeof ApiPublicTelegramPendingRequestsRoute
   '/api/public/telegram/verify-result': typeof ApiPublicTelegramVerifyResultRoute
@@ -94,8 +88,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
     | '/admin'
+    | '/auth'
     | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
@@ -103,8 +97,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/admin'
+    | '/auth'
     | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
@@ -112,9 +106,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
+    | '/admin'
     | '/auth'
-    | '/_authenticated/admin'
     | '/api/public/telegram/bridge'
     | '/api/public/telegram/pending-requests'
     | '/api/public/telegram/verify-result'
@@ -123,7 +116,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   ApiPublicTelegramBridgeRoute: typeof ApiPublicTelegramBridgeRoute
   ApiPublicTelegramPendingRequestsRoute: typeof ApiPublicTelegramPendingRequestsRoute
@@ -140,11 +133,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -153,13 +146,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/telegram/bridge': {
       id: '/api/public/telegram/bridge'
@@ -192,20 +178,9 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-}
-
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   ApiPublicTelegramBridgeRoute: ApiPublicTelegramBridgeRoute,
   ApiPublicTelegramPendingRequestsRoute: ApiPublicTelegramPendingRequestsRoute,
