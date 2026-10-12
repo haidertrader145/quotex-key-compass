@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
+import { MIN_DEPOSIT, parseAffiliateReply } from "@/lib/affiliate-reply";
 import { safeEqual, sendMessage } from "@/lib/telegram.server";
-
-const MIN_DEPOSIT = 50;
 
 const bodySchema = z.object({
   request_id: z.string().uuid(),
@@ -47,28 +46,29 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
 
         const now = new Date().toISOString();
 
-        // Minimum deposit rule: verified accounts must have deposited at least $50.
-        if (verified && affiliate_reply) {
-          const num = (label: string) => {
-            const m = affiliate_reply.match(new RegExp(`${label}:\\s*\\$?\\s*(-?[\\d,]+(?:\\.\\d+)?)`, "i"));
-            return m ? Number((m[1] ?? "").replace(/,/g, "")) : null;
-          };
-          const deposit = num("Deposits Sum");
-          const balance = num("Balance");
-          if (deposit !== null && deposit < MIN_DEPOSIT) {
-            await supabaseAdmin
-              .from("verification_requests")
-              .update({ status: "rejected", affiliate_reply: `[LOW DEPOSIT] ${affiliate_reply}`, resolved_at: now })
-              .eq("id", request_id);
-            await sendMessage(
-              reqRow.chat_id,
-              `✅ Your account (trader ID <b>${reqRow.trader_id}</b>) was created through our affiliate link.\n\n💰 Deposit: <b>$${deposit.toFixed(2)}</b>\n💼 Balance: <b>$${(balance ?? 0).toFixed(2)}</b>\n\n⚠️ To get access, please deposit at least <b>$${MIN_DEPOSIT} USD</b>, then send your trader ID again.`,
-            );
-            return Response.json({ ok: true, verified: true, low_deposit: true });
+        // The reply text is the source of truth; the bridge flag is only a fallback.
+        let isVerified = verified;
+        if (affiliate_reply) {
+          const v = parseAffiliateReply(affiliate_reply, reqRow.trader_id);
+          if (v.kind === "not_found") isVerified = false;
+          if (v.kind === "verified") {
+            isVerified = true;
+            const deposit = v.deposit ?? 0;
+            if (deposit < MIN_DEPOSIT) {
+              await supabaseAdmin
+                .from("verification_requests")
+                .update({ status: "rejected", affiliate_reply: `[LOW DEPOSIT] ${affiliate_reply}`, resolved_at: now })
+                .eq("id", request_id);
+              await sendMessage(
+                reqRow.chat_id,
+                `✅ Your account (trader ID <b>${reqRow.trader_id}</b>) was created through our affiliate link.\n\n💰 Deposit: <b>$${deposit.toFixed(2)}</b>\n💼 Balance: <b>$${(v.balance ?? 0).toFixed(2)}</b>\n\n⚠️ To get access, please deposit at least <b>$${MIN_DEPOSIT} USD</b>, then send your trader ID again.`,
+              );
+              return Response.json({ ok: true, verified: true, low_deposit: true });
+            }
           }
         }
 
-        if (!verified) {
+        if (!isVerified) {
           await supabaseAdmin
             .from("verification_requests")
             .update({ status: "rejected", affiliate_reply: affiliate_reply ?? null, resolved_at: now })
