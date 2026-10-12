@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 
 import { BridgePanel } from "@/components/BridgePanel";
-import { addLicenseKeys, getAdminOverview, lockAdmin, resolveRequest, unlockAdmin } from "@/lib/admin.functions";
+import { addLicenseKeys, getAdminOverview, resolveRequest } from "@/lib/admin.functions";
 
 type Overview = Awaited<ReturnType<typeof getAdminOverview>>;
 
@@ -39,10 +39,6 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function AdminPage() {
-  const unlock = useServerFn(unlockAdmin);
-  const lock = useServerFn(lockAdmin);
-  const [pw, setPw] = useState("");
-  const [pwError, setPwError] = useState(false);
   const fetchOverview = useServerFn(getAdminOverview);
   const postKeys = useServerFn(addLicenseKeys);
   const postResolve = useServerFn(resolveRequest);
@@ -91,37 +87,6 @@ function AdminPage() {
     }
   }
 
-  if (error === "Locked") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const r = await unlock({ data: { password: pw } });
-            if (r.ok) {
-              setPw("");
-              setPwError(false);
-              await load();
-            } else setPwError(true);
-          }}
-          className="w-full max-w-sm rounded-xl border border-border bg-card p-6"
-        >
-          <h1 className="text-xl font-semibold text-foreground">Admin password</h1>
-          <input
-            type="password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            autoComplete="current-password"
-            className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          {pwError && <p className="mt-2 text-sm text-destructive">Incorrect password</p>}
-          <button type="submit" className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-            Open admin
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   if (!data) {
     return (
@@ -138,16 +103,6 @@ function AdminPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <h1 className="text-lg font-bold text-foreground">License Key Bot — Admin</h1>
-          <button
-            onClick={async () => {
-              await lock();
-              setData(null);
-              setError("Locked");
-            }}
-            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-          >
-            Lock
-          </button>
         </div>
       </header>
 
