@@ -1,2 +1,2 @@
-- [ ] Fix Railway helper address (v5 zip)
-- [ ] Connect Telegram in new workspace + re-register webhook
+- [x] Fix Railway helper address (v5 zip)
+- [x] Connect Telegram in new workspace + re-register webhook
