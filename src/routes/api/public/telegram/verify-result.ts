@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { MIN_DEPOSIT, parseAffiliateReply } from "@/lib/affiliate-reply";
+import { MIN_DEPOSIT, formatTraderDetails, meetsDepositRequirement, parseAffiliateReply } from "@/lib/affiliate-reply";
 import { safeEqual, sendMessage } from "@/lib/telegram.server";
 
 const bodySchema = z.object({
@@ -48,20 +48,21 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
 
         // The reply text is the source of truth; the bridge flag is only a fallback.
         let isVerified = verified;
+        let traderDetails = "";
         if (affiliate_reply) {
           const v = parseAffiliateReply(affiliate_reply, reqRow.trader_id);
           if (v.kind === "not_found") isVerified = false;
           if (v.kind === "verified") {
             isVerified = true;
-            const deposit = v.deposit ?? 0;
-            if (deposit < MIN_DEPOSIT) {
+            traderDetails = formatTraderDetails(v);
+            if (!meetsDepositRequirement(v.deposit)) {
               await supabaseAdmin
                 .from("verification_requests")
                 .update({ status: "rejected", affiliate_reply: `[LOW DEPOSIT] ${affiliate_reply}`, resolved_at: now })
                 .eq("id", request_id);
               await sendMessage(
                 reqRow.chat_id,
-                `✅ Your account (trader ID <b>${reqRow.trader_id}</b>) was created through our affiliate link.\n\n💰 Deposit: <b>$${deposit.toFixed(2)}</b>\n💼 Balance: <b>$${(v.balance ?? 0).toFixed(2)}</b>\n\n⚠️ To get access, please deposit at least <b>$${MIN_DEPOSIT} USD</b>, then send your trader ID again.`,
+                `✅ Your account was created through our affiliate link.\n\n${traderDetails}\n\n⚠️ Deposit at least <b>$${MIN_DEPOSIT} USD</b> to get access, then send your trader ID again.`,
               );
               return Response.json({ ok: true, verified: true, low_deposit: true });
             }
@@ -95,7 +96,7 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
             .eq("id", request_id);
           await sendMessage(
             reqRow.chat_id,
-            "✅ Your trader ID is verified! However, we're temporarily out of license keys — the team has been notified and will send yours shortly.",
+              `✅ Your account is verified!\n\n${traderDetails ? `${traderDetails}\n\n` : ""}We're temporarily out of license keys — the team has been notified and will send yours shortly.`,
           );
           return Response.json({ ok: true, verified: true, key_issued: false });
         }
@@ -126,7 +127,7 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
 
         await sendMessage(
           reqRow.chat_id,
-          `🎉 <b>Verified!</b> Trader ID <b>${reqRow.trader_id}</b> is confirmed.\n\n🔑 Your license key:\n<code>${key.key}</code>\n\nKeep it safe — it's tied to your account.`,
+          `🎉 <b>Verified!</b>\n\n${traderDetails ? `${traderDetails}\n\n` : ""}🔑 Your license key:\n<code>${key.key}</code>\n\nKeep it safe — it's tied to your account.`,
         );
 
         return Response.json({ ok: true, verified: true, key_issued: true });
