@@ -1,7 +1,7 @@
 export const MIN_DEPOSIT = 50;
 
 export type AffiliateVerdict =
-  | { kind: "verified"; deposit: number | null; balance: number | null }
+  | { kind: "verified"; country: string | null; deposit: number | null; balance: number | null }
   | { kind: "not_found" }
   | { kind: "unknown" };
 
@@ -16,7 +16,17 @@ export function parseAffiliateReply(reply: string, traderId: string): AffiliateV
   if (/was not found/i.test(text)) return { kind: "not_found" };
   const m = text.match(/Trader\s*#\s*(\d+)/i);
   if (m && m[1] === traderId.trim()) {
-    return { kind: "verified", deposit: amount(text, "Deposits Sum"), balance: amount(text, "Balance") };
+    return { kind: "verified", country: text.match(/^Country:\s*([^\r\n]+)/im)?.[1]?.trim() ?? null, deposit: amount(text, "Deposits Sum"), balance: amount(text, "Balance") };
   }
   return { kind: "unknown" };
+}
+
+export function meetsDepositRequirement(deposit: number | null): boolean {
+  return (deposit ?? 0) >= MIN_DEPOSIT;
+}
+
+export function formatTraderDetails(verdict: Extract<AffiliateVerdict, { kind: "verified" }>): string {
+  const country = (verdict.country ?? "Unavailable").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const money = (value: number | null) => value === null ? "Unavailable" : `$${value.toFixed(2)}`;
+  return `🌍 Country: <b>${country}</b>\n💼 Total balance: <b>${money(verdict.balance)}</b>\n💰 Deposit: <b>${money(verdict.deposit)}</b>`;
 }
