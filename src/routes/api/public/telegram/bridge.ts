@@ -4,6 +4,7 @@ import { safeEqual } from "@/lib/telegram.server";
 
 // Used by the always-on bridge. GET returns its config + saved login state.
 // POST updates status / saves the session. Protected by VERIFIER_SECRET.
+// (redeploy marker: 2026-10-19)
 function authorized(request: Request) {
   const secret = process.env["VERIFIER_SECRET"];
   const provided = request.headers.get("X-Verifier-Secret") ?? "";
