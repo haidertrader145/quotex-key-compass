@@ -1,3 +1,3 @@
 - [x] Fix Railway helper address (v5 zip)
 - [x] Connect Telegram in new workspace + re-register webhook
-- [x] Show country, total balance, and deposit in Telegram verification replies while retaining the $50 access reminder.
+- [ ] Show only trader ID, country, deposit, and balance with simple emojis; remove all other text from registered-trader replies.

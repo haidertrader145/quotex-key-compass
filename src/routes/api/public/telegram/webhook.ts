@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatTraderDetails, parseAffiliateReply } from "@/lib/affiliate-reply";
 
 import {
   deriveTelegramWebhookSecret,
@@ -53,18 +54,27 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             return Response.json({ ok: true });
           }
 
-          // Already verified? Re-send the existing key.
+          // Already verified? Show the stored affiliate account details.
           const { data: existing } = await supabaseAdmin
             .from("verified_users")
-            .select("trader_id, license_keys(key)")
+            .select("trader_id")
             .eq("chat_id", chatId)
             .maybeSingle();
 
           if (existing) {
-            const key = (existing.license_keys as { key: string } | null)?.key;
+            const { data: previous } = await supabaseAdmin
+              .from("verification_requests")
+              .select("affiliate_reply")
+              .eq("chat_id", chatId)
+              .eq("trader_id", existing.trader_id)
+              .not("affiliate_reply", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            const verdict = parseAffiliateReply(previous?.affiliate_reply ?? "", existing.trader_id);
             await sendMessage(
               chatId,
-              `✅ Your trader ID <b>${existing.trader_id}</b> is already verified.\n\n🔑 Your license key:\n<code>${key ?? "unavailable — contact support"}</code>`,
+              formatTraderDetails(existing.trader_id, verdict.kind === "verified" ? verdict : { kind: "verified", country: null, deposit: null, balance: null }),
             );
             return Response.json({ ok: true });
           }
