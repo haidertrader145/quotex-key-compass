@@ -25,8 +25,9 @@ export function meetsDepositRequirement(deposit: number | null): boolean {
   return (deposit ?? 0) >= MIN_DEPOSIT;
 }
 
-export function formatTraderDetails(verdict: Extract<AffiliateVerdict, { kind: "verified" }>): string {
+export function formatTraderDetails(traderId: string, verdict: Extract<AffiliateVerdict, { kind: "verified" }>): string {
   const country = (verdict.country ?? "Unavailable").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const money = (value: number | null) => value === null ? "Unavailable" : `$${value.toFixed(2)}`;
-  return `🌍 Country: <b>${country}</b>\n💼 Total balance: <b>${money(verdict.balance)}</b>\n💰 Deposit: <b>${money(verdict.deposit)}</b>`;
+  const id = traderId.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `✅ Trader ID: <b>${id}</b>\n🌍 Country: <b>${country}</b>\n💰 Deposit: <b>${money(verdict.deposit)}</b>\n💼 Balance: <b>${money(verdict.balance)}</b>`;
 }
