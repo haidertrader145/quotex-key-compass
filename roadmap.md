@@ -1,3 +1,3 @@
 - [x] Fix Railway helper address (v5 zip)
 - [x] Connect Telegram in new workspace + re-register webhook
-- [ ] Show only trader ID, country, deposit, and balance with simple emojis; remove all other text from registered-trader replies.
+- [x] Show only trader ID, country, deposit, and balance with simple emojis; remove all other text from registered-trader replies.
