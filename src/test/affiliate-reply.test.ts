@@ -16,6 +16,10 @@ describe("parseAffiliateReply", () => {
   it("detects not found", () => {
     expect(parseAffiliateReply("Trader with ID = '1234567' was not found.", "1234567").kind).toBe("not_found");
   });
+  it("detects account deleted", () => {
+    expect(parseAffiliateReply("Trader # 60539010\nAccount Deleted", "60539010").kind).toBe("account_deleted");
+    expect(parseAffiliateReply("This account is deleted.", "60539010").kind).toBe("account_deleted");
+  });
   it("rejects a reply for a different trader ID", () => {
     expect(parseAffiliateReply(ok, "11111111").kind).toBe("unknown");
   });
