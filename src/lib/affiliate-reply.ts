@@ -3,6 +3,7 @@ export const MIN_DEPOSIT = 50;
 export type AffiliateVerdict =
   | { kind: "verified"; country: string | null; deposit: number | null; balance: number | null }
   | { kind: "not_found" }
+  | { kind: "account_deleted" }
   | { kind: "unknown" };
 
 function amount(text: string, label: string): number | null {
@@ -13,12 +14,17 @@ function amount(text: string, label: string): number | null {
 // Parses the Quotex affiliate bot reply for the given trader ID.
 export function parseAffiliateReply(reply: string, traderId: string): AffiliateVerdict {
   const text = reply ?? "";
+  if (/account\s*(is\s*)?deleted/i.test(text)) return { kind: "account_deleted" };
   if (/was not found/i.test(text)) return { kind: "not_found" };
   const m = text.match(/Trader\s*#\s*(\d+)/i);
   if (m && m[1] === traderId.trim()) {
     return { kind: "verified", country: text.match(/^Country:\s*([^\r\n]+)/im)?.[1]?.trim() ?? null, deposit: amount(text, "Deposits Sum"), balance: amount(text, "Balance") };
   }
   return { kind: "unknown" };
+}
+
+export function formatAccountDeleted(): string {
+  return "🚫 <b>ACCOUNT DELETED</b>";
 }
 
 export function meetsDepositRequirement(deposit: number | null): boolean {
