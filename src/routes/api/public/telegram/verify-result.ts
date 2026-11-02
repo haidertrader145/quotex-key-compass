@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { formatTraderDetails, meetsDepositRequirement, parseAffiliateReply } from "@/lib/affiliate-reply";
+import { formatAccountDeleted, formatTraderDetails, meetsDepositRequirement, parseAffiliateReply } from "@/lib/affiliate-reply";
 import { safeEqual, sendMessage } from "@/lib/telegram.server";
 
 const bodySchema = z.object({
@@ -52,6 +52,14 @@ export const Route = createFileRoute("/api/public/telegram/verify-result")({
         if (affiliate_reply) {
           const v = parseAffiliateReply(affiliate_reply, reqRow.trader_id);
           if (v.kind === "not_found") isVerified = false;
+          if (v.kind === "account_deleted") {
+            await supabaseAdmin
+              .from("verification_requests")
+              .update({ status: "rejected", affiliate_reply: `[ACCOUNT DELETED] ${affiliate_reply}`, resolved_at: now })
+              .eq("id", request_id);
+            await sendMessage(reqRow.chat_id, formatAccountDeleted());
+            return Response.json({ ok: true, verified: false, account_deleted: true });
+          }
           if (v.kind === "verified") {
             isVerified = true;
             traderDetails = formatTraderDetails(reqRow.trader_id, v);
